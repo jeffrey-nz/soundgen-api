@@ -6,7 +6,7 @@ Outputs to:  dashboard~/showcase-midi/<id>/{bass,pad,melody,drums}.mid
 """
 import sys, struct, os, random
 
-OUT_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'showcase-midi')
+OUT_BASE = os.environ.get('MIDI_OUTPUT_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'showcase-midi'))
 
 # ── MIDI encoding ─────────────────────────────────────────────────────────────
 

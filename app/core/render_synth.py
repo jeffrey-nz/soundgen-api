@@ -14,8 +14,8 @@ Usage:
 import sys, os, time
 
 DASHBOARD = os.path.dirname(os.path.abspath(__file__))
-MIDI_BASE  = os.path.join(DASHBOARD, 'showcase-midi')
-AUDIO_OUT  = os.path.join(DASHBOARD, 'showcase-audio')
+MIDI_BASE  = os.environ.get('MIDI_OUTPUT_DIR',  os.path.join(DASHBOARD, 'showcase-midi'))
+AUDIO_OUT  = os.environ.get('AUDIO_OUTPUT_DIR', os.path.join(DASHBOARD, 'showcase-audio'))
 
 sys.path.insert(0, DASHBOARD)
 

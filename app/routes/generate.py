@@ -10,12 +10,16 @@ router = APIRouter()
 
 
 async def _stream_script(args: list[str]) -> StreamingResponse:
+    import os
+    env = {**os.environ, "MIDI_OUTPUT_DIR": str(MIDI_OUTPUT_DIR)}
+
     async def event_gen():
         proc = await asyncio.create_subprocess_exec(
             *args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(CORE_DIR),
+            env=env,
         )
         async for raw in proc.stdout:
             line = raw.decode(errors="replace").rstrip()

@@ -1,14 +1,17 @@
 """WAV rendering via render_synth.py — streams progress as SSE."""
 import asyncio
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi import HTTPException
 
-from app.config import CORE_DIR, AUDIO_OUTPUT_DIR, PYTHON
+from app.config import CORE_DIR, AUDIO_OUTPUT_DIR, MIDI_OUTPUT_DIR, PYTHON
 
 router = APIRouter()
+
+_ENV = lambda: {**os.environ, "MIDI_OUTPUT_DIR": str(MIDI_OUTPUT_DIR), "AUDIO_OUTPUT_DIR": str(AUDIO_OUTPUT_DIR)}
 
 
 @router.post("")
@@ -20,6 +23,7 @@ async def render_all():
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(CORE_DIR),
+            env=_ENV(),
         )
         async for raw in proc.stdout:
             yield f"data: {raw.decode(errors='replace').rstrip()}\n\n"
@@ -38,6 +42,7 @@ async def render_one(piece_id: str):
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(CORE_DIR),
+            env=_ENV(),
         )
         async for raw in proc.stdout:
             yield f"data: {raw.decode(errors='replace').rstrip()}\n\n"
