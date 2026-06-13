@@ -12,16 +12,19 @@ Usage:
 """
 import sys, os, json, time, signal, threading
 
-DASHBOARD = os.path.dirname(os.path.abspath(__file__))
-MIDI_BASE = os.path.join(DASHBOARD, 'showcase-midi')
+_here = os.path.dirname(os.path.abspath(__file__))
+_dashboard = os.path.normpath(os.path.join(_here, '..', '..', '..', 'procmusic-dashboard', 'dashboard'))
+_default_midi = os.path.join(_dashboard, 'showcase-midi')
+MIDI_BASE = os.environ.get('MIDI_OUTPUT_DIR', _default_midi)
+DASHBOARD = _dashboard
 
 
 def get_port_hint():
     try:
         with open(os.path.join(DASHBOARD, 'kontakt-setup.json')) as f:
-            return json.load(f).get('midiPortName', 'loop')
+            return json.load(f).get('midiPortName') or 'IAC'
     except Exception:
-        return 'loop'
+        return 'IAC'
 
 
 def open_midi_out(hint):
@@ -140,21 +143,23 @@ def main():
     running = [True]
 
     # ── Graceful stop via stdin (server writes "stop\n") ──────────────────────
-    # This is the primary stop mechanism on Windows where SIGTERM is a hard kill.
+    # stdin EOF stops playback only on Windows (SIGTERM is a hard kill there).
+    # On POSIX, use SIGTERM instead — stdin may be closed/empty at launch.
     def _watch_stdin():
         try:
             for line in sys.stdin:
                 if line.strip() in ('stop', 'panic'):
                     running[0] = False
-                    break
+                    return
         except Exception:
             pass
-        running[0] = False
+        if sys.platform == 'win32':
+            running[0] = False
 
     stdin_thread = threading.Thread(target=_watch_stdin, daemon=True)
     stdin_thread.start()
 
-    # ── Signal handlers (fallback — may not run on Windows hard-kill) ─────────
+    # ── Signal handlers ────────────────────────────────────────────────────────
     def _on_signal(sig, frame):
         running[0] = False
 
@@ -164,13 +169,23 @@ def main():
     except Exception:
         pass
 
+    def _sleep(secs):
+        # PEP 475 causes time.sleep() to restart after a signal when the handler
+        # doesn't raise. Use 50 ms chunks so we exit within one tick of SIGTERM.
+        deadline = time.monotonic() + secs
+        while running[0]:
+            left = deadline - time.monotonic()
+            if left <= 0:
+                break
+            time.sleep(min(0.05, left))
+
     start = time.monotonic()
     for t_sec, raw in events:
         if not running[0]:
             break
         wait = t_sec - (time.monotonic() - start)
         if wait > 0.001:
-            time.sleep(wait)
+            _sleep(wait)
         if not running[0]:
             break
         try:
