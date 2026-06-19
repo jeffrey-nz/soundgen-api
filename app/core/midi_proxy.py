@@ -57,6 +57,38 @@ def _auto_idx():
         if 'wavetable' not in p.lower(): return i
     return 0 if ports else None
 
+
+# --cmd one-shot mode: used by soundgen-api/routes/ports.py
+if len(sys.argv) >= 3 and sys.argv[1] == '--cmd':
+    auto = _auto_idx()
+    if auto is not None:
+        open_port(auto)
+    try:
+        msg = json.loads(sys.argv[2])
+        t = msg.get('type', '')
+        if t == 'ports':
+            reply({"ports": ports, "selected": sel})
+        elif t == 'select':
+            open_port(msg.get('port'))
+            reply({"selected": sel})
+        elif t == 'note_on':
+            ch = max(0, min(15, (msg.get('ch', 1) - 1)))
+            send([0x90 | ch, int(msg.get('note', 60)), int(msg.get('vel', 80))])
+            reply({"ok": True})
+        elif t == 'note_off':
+            ch = max(0, min(15, (msg.get('ch', 1) - 1)))
+            send([0x80 | ch, int(msg.get('note', 60)), 0])
+            reply({"ok": True})
+        elif t == 'all_off':
+            for ch in range(16):
+                send([0xB0 | ch, 123, 0])
+            reply({"ok": True})
+        else:
+            reply({"error": f"unknown type: {t}"})
+    except Exception as e:
+        reply({"error": str(e)})
+    sys.exit(0)
+
 auto = _auto_idx()
 if auto is not None:
     open_port(auto)
