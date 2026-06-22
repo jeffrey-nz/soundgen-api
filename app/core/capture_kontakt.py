@@ -136,7 +136,7 @@ def main():
         FFMPEG, '-y',
         '-f', 'avfoundation',
         '-i', f':{device_idx}',      # audio-only: ":N" selects audio device N
-        '-ar', '44100',
+        '-ar', '48000',   # match BlackHole's native rate to avoid resampling artifacts
         '-ac', '2',
         '-acodec', 'pcm_s16le',
         tmp_wav,
