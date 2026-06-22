@@ -79,6 +79,12 @@ if len(sys.argv) >= 3 and sys.argv[1] == '--cmd':
             ch = max(0, min(15, (msg.get('ch', 1) - 1)))
             send([0x80 | ch, int(msg.get('note', 60)), 0])
             reply({"ok": True})
+        elif t == 'cc':
+            ch    = max(0, min(15, (msg.get('ch', 1) - 1)))
+            ccnum = max(0, min(127, int(msg.get('cc', 0))))
+            val   = max(0, min(127, int(msg.get('value', 0))))
+            send([0xB0 | ch, ccnum, val])
+            reply({"ok": True})
         elif t == 'all_off':
             for ch in range(16):
                 send([0xB0 | ch, 123, 0])
@@ -122,6 +128,13 @@ for raw in sys.stdin:
             ch  = max(0, min(15, (msg.get('ch', 1) - 1)))
             note = int(msg.get('note', 60))
             send([0x80 | ch, note, 0])
+            reply({"ok": True})
+
+        elif t == 'cc':
+            ch    = max(0, min(15, (msg.get('ch', 1) - 1)))
+            ccnum = max(0, min(127, int(msg.get('cc', 0))))
+            val   = max(0, min(127, int(msg.get('value', 0))))
+            send([0xB0 | ch, ccnum, val])
             reply({"ok": True})
 
         elif t == 'all_off':

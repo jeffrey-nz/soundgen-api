@@ -20,7 +20,7 @@ Run:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import catalog, generate, render, play, ports
+from app.routes import catalog, generate, render, play, ports, capture
 
 app = FastAPI(
     title="SoundGen API",
@@ -40,6 +40,7 @@ app.include_router(generate.router, prefix="/generate", tags=["MIDI Generation"]
 app.include_router(render.router,   prefix="/render",   tags=["Audio Rendering"])
 app.include_router(ports.router,    prefix="/ports",    tags=["MIDI Ports"])
 app.include_router(play.router,     prefix="/play",     tags=["Playback"])
+app.include_router(capture.router,  prefix="/capture",  tags=["Kontakt Capture"])
 
 
 @app.get("/", tags=["Health"])
